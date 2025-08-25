@@ -18,13 +18,28 @@ jobs:
         with:
           python-version: 3.12
 
-      - name: Build package
+      - name: Build package using ros_release_python
         run: |
-          pip install build
-          python -m build
+          # Create a temporary directory for ros_release_python
+          TEMP_DIR=$(mktemp -d)
+          cd $TEMP_DIR
+
+          # Clone the ros_release_python repository
+          git clone https://github.com/ros-infrastructure/ros_release_python.git
+
+          # Build the docker image
+          cd ros_release_python
+          docker build -t rrp .
+
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/projects/vcs2l" \
+            -v "$(pwd):/ros_release_python" \
+            -w "/projects/vcs2l" \
+            rrp \
+            bash -c "/ros_release_python/scripts/ros_release_python pip"
 
       - name: Upload assets to release
         run: |
-          gh release upload ${{ github.event.release.tag_name }} dist/*
+          gh release upload ${{ github.event.release.tag_name }} dist/* --clobber
         env:
           GH_TOKEN: ${{ github.token }}
