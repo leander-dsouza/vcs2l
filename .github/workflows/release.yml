@@ -18,13 +18,38 @@ jobs:
         with:
           python-version: 3.12
 
-      - name: Build package
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - name: Build package using ros_release_python
         run: |
-          pip install build
-          python -m build
+          # Create a temporary directory for ros_release_python
+          TEMP_DIR=$(mktemp -d)
+          cd $TEMP_DIR
+
+          # Clone the ros_release_python repository
+          git clone https://github.com/ros-infrastructure/ros_release_python.git
+
+          # Build the docker image with caching
+          cd ros_release_python
+          docker buildx build \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
+            --load \
+            -t rrp .
+
+          REPO_NAME=$(basename $GITHUB_REPOSITORY)
+
+          # Run the docker container to build the package
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/projects/$REPO_NAME" \
+            -v "$(pwd):/ros_release_python" \
+            -w "/projects/$REPO_NAME" \
+            rrp \
+            bash -c "/ros_release_python/scripts/ros_release_python pip"
 
       - name: Upload assets to release
         run: |
-          gh release upload ${{ github.event.release.tag_name }} dist/*
+          gh release upload ${{ github.event.release.tag_name }} dist/* --clobber
         env:
           GH_TOKEN: ${{ github.token }}
