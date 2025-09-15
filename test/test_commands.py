@@ -14,9 +14,9 @@ file_uri_scheme = 'file://' if sys.platform != 'win32' else 'file:///'
 REPOS_FILE = os.path.join(os.path.dirname(__file__), 'list.repos')
 REPOS_FILE_URL = file_uri_scheme + REPOS_FILE
 REPOS2_FILE = os.path.join(os.path.dirname(__file__), 'list2.repos')
-REPOS_EXTENDS_FILE = os.path.join(os.path.dirname(__file__), 'list_extends.repos')
+REPOS_EXTENDS_FILE = os.path.join(os.path.dirname(__file__), 'list_extension.repos')
 REPOS_EXTENDS_LOOP_FILE = os.path.join(
-    os.path.dirname(__file__), 'list_extends_loop_child.repos'
+    os.path.dirname(__file__), 'loop_extension.repos'
 )
 BAD_REPOS_FILE = os.path.join(os.path.dirname(__file__), 'bad.repos')
 TEST_WORKSPACE = os.path.join(
