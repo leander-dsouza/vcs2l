@@ -14,6 +14,8 @@ from urllib.request import pathname2url
 
 import yaml
 
+REPO_LINK = 'https://github.com/ros-infrastructure/vcs2l.git'
+
 
 def to_file_url(path):
     return urljoin('file:', pathname2url(path))
@@ -30,28 +32,17 @@ def setup_git_repository(temp_dir):
     repo_root = os.path.dirname(os.path.dirname(__file__))
     gitrepo_path = os.path.join(temp_dir.name, 'gitrepo')
 
-    print(f'\n*** SETUP_GIT_REPOSITORY: Cloning from {repo_root} to {gitrepo_path} ***')
+    commits_count = int(
+        subprocess.check_output(
+            ['git', 'rev-list', '--count', 'HEAD'], cwd=repo_root
+        ).strip()
+    )
+
+    if commits_count == 1:
+        repo_root = REPO_LINK  # codecov sparsely clones the repo
+
     subprocess.check_call(['git', 'clone', repo_root, gitrepo_path])
-    # checkout to the default branch
-    try:
-        # Get the default branch name from remote
-        result = subprocess.check_output(['git', 'symbolic-ref', 'refs/remotes/origin/HEAD'],
-                                       cwd=gitrepo_path, text=True)
-        default_branch = result.strip().split('/')[-1]
-        print(f'\n*** SETUP_GIT_REPOSITORY: Checking out default branch: {default_branch} ***')
-        subprocess.check_call(['git', 'checkout', default_branch], cwd=gitrepo_path)
-    except subprocess.CalledProcessError as e:
-        print(f'\n*** SETUP_GIT_REPOSITORY: Failed to get default branch: {e} ***')
-        # Fallback: try common default branch names
-        for branch in ['main', 'master']:
-            try:
-                print(f'*** SETUP_GIT_REPOSITORY: Trying to checkout branch: {branch} ***')
-                subprocess.check_call(['git', 'checkout', branch], cwd=gitrepo_path)
-                print(f'*** SETUP_GIT_REPOSITORY: Successfully checked out {branch} ***\n')
-                break
-            except subprocess.CalledProcessError as branch_error:
-                print(f'*** SETUP_GIT_REPOSITORY: Failed to checkout {branch}: {branch_error} ***')
-                continue
+    subprocess.check_call(['git', 'branch', '-m', 'main'], cwd=gitrepo_path)
 
     return gitrepo_path
 
