@@ -30,7 +30,15 @@ def setup_git_repository(temp_dir):
     repo_root = os.path.dirname(os.path.dirname(__file__))
     gitrepo_path = os.path.join(temp_dir.name, 'gitrepo')
 
-    subprocess.check_call(['git', 'clone', '--branch', 'main', repo_root, gitrepo_path])
+    subprocess.check_call(['git', 'clone', repo_root, gitrepo_path])
+    try:
+        subprocess.check_call(['git', 'checkout', 'main'], cwd=gitrepo_path)
+    except subprocess.CalledProcessError:
+        subprocess.check_call(
+            ['git', 'fetch', 'origin', 'main'],
+            cwd=gitrepo_path,
+        )
+        subprocess.check_call(['git', 'checkout', 'main'], cwd=gitrepo_path)
 
     return gitrepo_path
 
